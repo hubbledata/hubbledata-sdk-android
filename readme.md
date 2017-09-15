@@ -16,21 +16,7 @@
 
 ## 导入 SDK ##
 
-### Gradle
-
-`project`的`build.grade`中添加maven地址
-
-    allprojects {
-        repositories {
-            maven {
-                url "https://raw.githubusercontent.com/hubbledata/hubbledata-sdk-android/master"
-            }
-        }
-    }
-
-`app`的`build.grade`中添加
-	
-	compile 'com.netease.da:hubbledata-sdk-android:2.1'
+将下载包里面的 mobidroid.jar 放入 App 项目 libs 目录中
 
 ## 启用 ##
 
@@ -101,6 +87,12 @@ Android 4.0以下版本必须在 App 中所有 Activity `onPause` 方法添加�
 关闭Debug模式。建议在自定义`Application`的 onCreate 中调用。
 	
 	DATracker.getInstance().setDebugMode(false);
+
+## 是否读取定位
+
+当app具备定位权限且该接口设置为true时，读取定位数据。否则，不读取。默认为false。
+
+	DATracker.getInstance().enableLocationAccess(true);
 
 ## 手动发送数据
 
@@ -183,19 +175,21 @@ attributes 为自定义字段名称，格式如 "{"money":"100", "timestamp":"13
     attr.put("money", "100");
     DATracker.getInstance().trackEvent("login", attr);
 
-还可以对事件进行归类和打标签
-
-    public void trackEvent(String eventId, String category, String label);
-    public void trackEvent(String eventId, String category, String label, final Map<String, String> attributes);
-
 如果需要记录事件发生持续时间，可调用如下接口
 
-    public void trackEvent(String eventId, int costTime, String category, String label);
-    public void trackEvent(final String eventId, final int costTime, String category, String label, final Map<String, String> attributes);
+    public void trackEvent(String eventId, int costTime);
+    public void trackEvent(final String eventId, final int costTime, final Map<String, String> attributes);
 
-如果需要记录事件发生时的位置信息, 可调用如下接口，单位为秒
+如果需要记录事件发生时的位置信息, 可调用如下接口
 
-    public void trackEvent(final String eventId, final int costTime, double latitude, double longitude, String category, String label, final Map<String, String> attributes);
+    public void trackEvent(final String eventId, double latitude, double longitude);
+    public void trackEvent(final String eventId, double latitude, double longitude,
+                           final Map<String, String> attributes)
+                           
+如果需要记录发生持续时间以及记录事件发生时的位置信息, 可调用如下接口
+	
+	public void trackEvent(final String eventId, final int costTime, double latitude, double longitude,
+	                           final Map<String, String> attributes)
 
 **虽然在任何地方都可以进行事件捕捉，但最好不要在较多循环内或者非主线程中调用，以及最好不要使用很长 eventID 或者 key value 值，否则会增加 SDK 发送的数据量**
 
@@ -366,7 +360,7 @@ content 为分享内容，from 为分享发生地，to 为分享目的地，比�
 
     public void setLocation(String country, String region, String city);
 
-## 页面统计
+## 页面统计（2.1新增）
 
 ### 版本要求
 
@@ -481,74 +475,6 @@ content 为分享内容，from 为分享发生地，to 为分享目的地，比�
 一个`Activity`同一时刻在屏幕中只将一个`Fragment`作为页面进行统计的情形，例如，主页(`Activity`)通过底部`Tab`切换`Fragment`，每切换到一个`Tab`，便将当前`Tab`对应的`Fragment`作为页面进行统计。
 
 对于需要进行页面统计的`Fragment`，除了在`Fragment`的`onResume()`、`onPause()`生命周期中分别加入`onFragmentResume`和`onFragmentPause`代码外，APP开发人员还需要根据`Fragment`的管理方式重写`setUserVisibleHint`或`onHiddenChanged`方法。如果不清楚是否应该重写`setUserVisibleHint`或`onHiddenChanged`方法，建议这两个方法都重写。
-
-==根据`Fragment`的管理方式重写方法说明（需了解Fragment生命周期）==
-
-(1) 通过 replace 的方式来管理底部的几个 tab 相互切换
-
-> replace 这种切换方式就是每次切换都要重新创建 Fragment，触发 onResume() 和 onPause()
-
-因此只需在`Fragment`的`onResume()`、`onPause()`生命周期中分别加入`onFragmentResume`和`onFragmentPause`代码
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        DATracker.getInstance().onFragmentResume(this);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        DATracker.getInstance().onFragmentPause(this);
-    }
-
-(2) 通过 show / hide 的方式来管理底部的几个 tab 相互切换
-
-> 当底部几个 Fragment 全部创建入栈之后，通过 show 和 hide 来管理 Fragment，此时只有 onHiddenChanged 方法回调，不再触发 onResume() 和 onPause()
-
-因此需要重写`onResume()`、`onPause()`、`onHiddenChanged()`三个方法：
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        DATracker.getInstance().onFragmentResume(this);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        DATracker.getInstance().onFragmentPause(this);
-    }
-
-    @Override
-    public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
-        DATracker.getInstance().onFragmentHiddenChanged(this, hidden);
-    }
-	
-(3) Fragment + ViewPager 预加载
-
-> ViewPager 切换 Fragment 时，首先将上一个 Fragment 的 setUserVisibleHint 置为 false，然后将要展示的 setUserVisibleHint 置为 true，也就是说，此时只有 setUserVisibleHint 方法回调，不再触发 onResume() 和 onPause()
-
-因此需要重写`onResume()`、`onPause()`、`setUserVisibleHint()`三个方法：
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        DATracker.getInstance().onFragmentResume(this);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        DATracker.getInstance().onFragmentPause(this);
-    }
-
-    @Override
-    public void setUserVisibleHint(boolean isVisibleToUser) {
-        super.setUserVisibleHint(isVisibleToUser);
-        DATracker.getInstance().setFragmentUserVisibleHint(this, isVisibleToUser);
-    }
 	
 建议上述代码可以在一个基类`TrackedFragment`中做，让所有需要进行页面统计的`Fragment`类都继承这个基类`TrackedFragment`，就完成了所有子类页面埋点。
 
@@ -583,6 +509,6 @@ content 为分享内容，from 为分享发生地，to 为分享目的地，比�
 当`Activity`实现`ActivityAutoTracker`接口且`trackFragmentAsScreen()`返回true时，SDK 会自动识别`Activity`中当前显示的`Fragment`并进行数据采集。反之，当`Activity`没有实现`ActivityAutoTracker`接口或者`trackFragmentAsScreen()`返回false时，不采集该`Activity`下的任何Fragment数据。
 
     
-情形二：==（局限性）==
+情形二：（局限性）
 
 当一个`Activity`下同时在屏幕中显示多个调用了SDK的`onFragmentResume`、`onFragmentPause`接口的`Fragment`时，我们无法判断将哪个作为页面统计。
