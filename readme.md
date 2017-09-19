@@ -16,7 +16,24 @@
 
 ## 导入 SDK ##
 
+### JAR导入
 将下载包里面的 mobidroid.jar 放入 App 项目 libs 目录中
+
+### Gradle
+
+`project`的`build.grade`中添加maven地址
+
+    allprojects {
+        repositories {
+            maven {
+                url "https://raw.githubusercontent.com/hubbledata/hubbledata-sdk-android/master"
+            }
+        }
+    }
+
+`app`的`build.grade`中添加下列语句。其中请将 `x.x` 替换为版本号。
+	
+	compile 'com.netease.da:hubbledata-sdk-android:x.x'
 
 ## 启用 ##
 
@@ -78,7 +95,9 @@ Android 4.0以下版本必须在 App 中所有 Activity `onPause` 方法添加�
 
 **如果应用中包含 Activitiy 类继承于自定义 Activity 衍生类，则只需在该类加入上述代码即可，即 `onResume` 中添加 `resume`，`onPause` 中添加 `close` 方法，如果 Main Activity 也继承于该类，则还需在 `onCreate` 中添加 `enableTracker`，其子类不需要添加。但其他非集成于此类的 Activitiy 类必须按上述规则添加代码。**
 
-## 支持Debug模式（默认关闭）##
+## 支持Debug模式
+
+如果App开发人员需要查看SDK内部日志，可通过该接口打开日志。默认关闭。
 
 开启Debug模式。建议在自定义`Application`的 onCreate 中调用。
 	
@@ -134,7 +153,7 @@ Android 4.0以下版本必须在 App 中所有 Activity `onPause` 方法添加�
 
 ## 获取 Device ID ##
 
-    [[DATracker sharedTracker] getDeviceId];
+    DATracker.getInstance().getDeviceId();
 
 **该 Device ID 并非 Apple UDID, 仅用户系统本身设备去重用途, 并且可能根据 Apple 政策做相应调整, 不保证长期唯一性**
 
