@@ -21,6 +21,8 @@
 
 ### Gradle
 
+我们将GitHub作为maven仓库，[GitHub仓库地址](https://github.com/hubbledata/hubbledata-sdk-android)
+
 `project`的`build.grade`中添加maven地址
 
     allprojects {
@@ -174,6 +176,10 @@ Android 4.0以下版本必须在 App 中所有 Activity `onPause` 方法添加�
 在拿到用户经纬度时, 调用如下接口记录用户位置
 
     public void setLocation(double latitude, double longitude);
+
+或者如果App开启了定位权限，可以调用如下接口设置sdk的定位读取权限。若设置为true，sdk会在应用进入前台时，自动读取定位数据，部分机型可能会弹出定位询问对话框。若设置为false，sdk不会读取定位数据。默认为false。
+
+	public void enableLocationAccess(boolean bool);
 
 ## 事件捕捉 ##
 
